@@ -193,7 +193,7 @@ def slice(filename, number_tiles=None, col=None, row=None, save=True, Decompress
     return tuple(tiles)
 
 
-def slice_frames(frame=None, number_tiles=None, col=None, row=None, save=True, DecompressionBombWarning=True):
+def slice_frames(image=None, number_tiles=None, col=None, row=None, save=True, DecompressionBombWarning=True):
     """
     Split an image into a specified number of tiles.
 
@@ -213,7 +213,8 @@ def slice_frames(frame=None, number_tiles=None, col=None, row=None, save=True, D
         Image.MAX_IMAGE_PIXELS = None
 
     # im = Image.open(filename)
-    im = Image.fromarray(frame, 'RGB')
+    im = image
+    # im = Image.fromarray(frame, 'RGB')
     im_w, im_h = im.size
 
     columns = 0
