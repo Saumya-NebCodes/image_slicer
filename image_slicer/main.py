@@ -33,7 +33,7 @@ class Tile(object):
         return get_basename(self.filename)
 
     def generate_filename(
-        self, directory=os.getcwd(), prefix="tile", format="png", path=True
+            self, directory=os.getcwd(), prefix="tile", format="png", path=True
     ):
         """Construct and return a filename for this tile."""
         filename = prefix + "_{col:02d}_{row:02d}.{ext}".format(
@@ -141,14 +141,7 @@ def validate_image_col_row(image, col, row):
         raise ValueError("There is nothing to divide. You asked for the entire image.")
 
 
-def slice(
-    filename,
-    number_tiles=None,
-    col=None,
-    row=None,
-    save=True,
-    DecompressionBombWarning=True,
-):
+def slice(filename, number_tiles=None, col=None, row=None, save=True, DecompressionBombWarning=True):
     """
     Split an image into a specified number of tiles.
 
@@ -168,6 +161,59 @@ def slice(
         Image.MAX_IMAGE_PIXELS = None
 
     im = Image.open(filename)
+    im_w, im_h = im.size
+
+    columns = 0
+    rows = 0
+    if number_tiles:
+        validate_image(im, number_tiles)
+        columns, rows = calc_columns_rows(number_tiles)
+    else:
+        validate_image_col_row(im, col, row)
+        columns = col
+        rows = row
+
+    tile_w, tile_h = int(floor(im_w / columns)), int(floor(im_h / rows))
+
+    tiles = []
+    number = 1
+    for pos_y in range(0, im_h - rows, tile_h):  # -rows for rounding error.
+        for pos_x in range(0, im_w - columns, tile_w):  # as above.
+            area = (pos_x, pos_y, pos_x + tile_w, pos_y + tile_h)
+            image = im.crop(area)
+            position = (int(floor(pos_x / tile_w)) + 1, int(floor(pos_y / tile_h)) + 1)
+            coords = (pos_x, pos_y)
+            tile = Tile(image, number, position, coords)
+            tiles.append(tile)
+            number += 1
+    if save:
+        save_tiles(
+            tiles, prefix=get_basename(filename), directory=os.path.dirname(filename)
+        )
+    return tuple(tiles)
+
+
+def slice_frames(frame=None, number_tiles=None, col=None, row=None, save=True, DecompressionBombWarning=True):
+    """
+    Split an image into a specified number of tiles.
+
+    Args:
+       filename (str):  The filename of the image to split.
+       number_tiles (int):  The number of tiles required.
+
+    Kwargs:
+       save (bool): Whether or not to save tiles to disk.
+       DecompressionBombWarning (bool): Whether to suppress
+       Pillow DecompressionBombWarning
+
+    Returns:
+        Tuple of :class:`Tile` instances.
+    """
+    if DecompressionBombWarning is False:
+        Image.MAX_IMAGE_PIXELS = None
+
+    # im = Image.open(filename)
+    im = Image.fromarray(frame, 'RGB')
     im_w, im_h = im.size
 
     columns = 0
